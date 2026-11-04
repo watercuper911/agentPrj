@@ -88,44 +88,34 @@ function bk(){expr=expr.slice(0,-1);update();}
 function update(){
   let d=expr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/Math\.PI/g,'π').replace(/Math\.E/g,'e');
   exprEl.textContent=d;
+  if(!expr){resEl.textContent='0';return}
   try{
-    if(!expr)resEl.textContent='0';
-    else{
-      let e=expr
-        .replace(/π/g,'Math.PI')
-        .replace(/√\(/g,'Math.sqrt(')
-        .replace(/sin\(/g,'Math.sin(')
-        .replace(/cos\(/g,'Math.cos(')
-        .replace(/tan\(/g,'Math.tan(')
-        .replace(/asin\(/g,'Math.asin(')
-        .replace(/acos\(/g,'Math.acos(')
-        .replace(/atan\(/g,'Math.atan(')
-        .replace(/log\(/g,'Math.log10(')
-        .replace(/ln\(/g,'Math.log(');
-      let r=Function('"use strict";return ('+e+')')();
-      if(isFinite(r))resEl.textContent=r;
-      else resEl.textContent='Error';
-    }
-  }catch(e){resEl.textContent='Error'}
+    let r=evalExpr(expr);
+    if(isFinite(r))resEl.textContent=r;
+  }catch(e){}
 }
 function calc(){
   try{
-    let e=expr
-      .replace(/π/g,'Math.PI')
-      .replace(/√\(/g,'Math.sqrt(')
-      .replace(/sin\(/g,'Math.sin(')
-      .replace(/cos\(/g,'Math.cos(')
-      .replace(/tan\(/g,'Math.tan(')
-      .replace(/asin\(/g,'Math.asin(')
-      .replace(/acos\(/g,'Math.acos(')
-      .replace(/atan\(/g,'Math.atan(')
-      .replace(/log\(/g,'Math.log10(')
-      .replace(/ln\(/g,'Math.log(');
-    if(expr.includes('!')){e=e.replace(/(\d+)!/g,(_,n)=>{let f=1;for(let i=2;i<=+n;i++)f*=i;return f})}
-    let r=Function('"use strict";return ('+e+')')();
+    let r=evalExpr(expr);
     if(!isFinite(r)){resEl.textContent='Error';return}
     _=String(r);expr=_;update();
   }catch(e){resEl.textContent='Error'}
+}
+function evalExpr(e){
+  let s=e
+    .replace(/π/g,'Math.PI')
+    .replace(/√\(/g,'Math.sqrt(')
+    .replace(/sin\(/g,'Math.sin(')
+    .replace(/cos\(/g,'Math.cos(')
+    .replace(/tan\(/g,'Math.tan(')
+    .replace(/asin\(/g,'Math.asin(')
+    .replace(/acos\(/g,'Math.acos(')
+    .replace(/atan\(/g,'Math.atan(')
+    .replace(/log\(/g,'Math.log10(')
+    .replace(/ln\(/g,'Math.log(');
+  if(e.includes('!'))s=s.replace(/(\d+)!/g,(_,n)=>{let f=1;for(let i=2;i<=+n;i++)f*=i;return f});
+  s=s.replace(/(\d)\(/g,'$1*(').replace(/(\d)(Math\.)/g,'$1*$2').replace(/\)\(/g,')*(');
+  return Function('"use strict";return ('+s+')')();
 }
 
 // Keyboard support
