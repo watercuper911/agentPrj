@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科学计算器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,system-ui,sans-serif;background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.calc{background:#16213e;border-radius:16px;padding:20px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.display{background:#0f3460;border-radius:12px;padding:16px;margin-bottom:16px;text-align:right;min-height:80px}
+.display .expr{color:#8899aa;font-size:14px;min-height:20px;word-break:break-all;margin-bottom:4px}
+.display .result{color:#fff;font-size:32px;font-weight:bold;word-break:break-all}
+.buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+button{border:none;border-radius:8px;padding:14px 0;font-size:16px;cursor:pointer;transition:.15s;color:#fff}
+button:active{transform:scale(.95)}
+.btn-func{background:#1a3a5c}.btn-func:hover{background:#234a72}
+.btn-num{background:#2a2a4a}.btn-num:hover{background:#3a3a5a}
+.btn-op{background:#e94560}.btn-op:hover{background:#ff5a75}
+.btn-eq{background:#e94560;grid-column:span 2}.btn-eq:hover{background:#ff5a75}
+.btn-clr{background:#533e2e}.btn-clr:hover{background:#6a5040}
+.btn-sci{background:#0f3460;font-size:13px}.btn-sci:hover{background:#1a4a80}
+</style>
+</head>
+<body>
+<div class="calc">
+  <div class="display">
+    <div class="expr" id="expr"></div>
+    <div class="result" id="result">0</div>
+  </div>
+  <div class="buttons">
+    <button class="btn-clr" onclick="clr()">AC</button>
+    <button class="btn-clr" onclick="bk()">⌫</button>
+    <button class="btn-sci" onclick="ins('(')">(</button>
+    <button class="btn-sci" onclick="ins(')')">)</button>
+    <button class="btn-sci" onclick="ins('!')">x!</button>
+
+    <button class="btn-sci" onclick="ins('sin(')">sin</button>
+    <button class="btn-sci" onclick="ins('cos(')">cos</button>
+    <button class="btn-sci" onclick="ins('tan(')">tan</button>
+    <button class="btn-sci" onclick="ins('π')">π</button>
+    <button class="btn-sci" onclick="ins('Math.E')">e</button>
+
+    <button class="btn-sci" onclick="ins('log(')">log</button>
+    <button class="btn-sci" onclick="ins('ln(')">ln</button>
+    <button class="btn-sci" onclick="ins('√(')">√</button>
+    <button class="btn-sci" onclick="ins('**')">xʸ</button>
+    <button class="btn-sci" onclick="ins('10**')">10ˣ</button>
+
+    <button class="btn-sci" onclick="ins('asin(')">sin⁻¹</button>
+    <button class="btn-sci" onclick="ins('acos(')">cos⁻¹</button>
+    <button class="btn-sci" onclick="ins('atan(')">tan⁻¹</button>
+    <button class="btn-sci" onclick="ins('1/')">1/x</button>
+    <button class="btn-sci" onclick="ins('**2')">x²</button>
+
+    <button class="btn-num" onclick="ins('7')">7</button>
+    <button class="btn-num" onclick="ins('8')">8</button>
+    <button class="btn-num" onclick="ins('9')">9</button>
+    <button class="btn-op" onclick="ins('+')">+</button>
+    <button class="btn-op" onclick="ins('-')">−</button>
+
+    <button class="btn-num" onclick="ins('4')">4</button>
+    <button class="btn-num" onclick="ins('5')">5</button>
+    <button class="btn-num" onclick="ins('6')">6</button>
+    <button class="btn-op" onclick="ins('*')">×</button>
+    <button class="btn-op" onclick="ins('/')">÷</button>
+
+    <button class="btn-num" onclick="ins('1')">1</button>
+    <button class="btn-num" onclick="ins('2')">2</button>
+    <button class="btn-num" onclick="ins('3')">3</button>
+    <button class="btn-num" onclick="ins('0')">0</button>
+    <button class="btn-num" onclick="ins('.')">.</button>
+
+    <button class="btn-func" onclick="ins('%')">%</button>
+    <button class="btn-eq" onclick="calc()">=</button>
+  </div>
+</div>
+<script>
+const exprEl=document.getElementById('expr'),resEl=document.getElementById('result');
+let expr='',_='';
+
+function ins(v){
+  v=v=='−'?'-':v;
+  // auto-close open parens when inserting an operator
+  if('+-*/%'.includes(v)){
+    let o=0;for(let c of expr){if(c=='(')o++;if(c==')')o--}
+    if(o>0)expr+=')'.repeat(o);
+  }
+  expr+=v;update();
+}
+function clr(){expr='';update();}
+function bk(){expr=expr.slice(0,-1);update();}
+function update(){
+  let d=expr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/Math\.PI/g,'π').replace(/Math\.E/g,'e');
+  exprEl.textContent=d;
+  if(!expr){resEl.textContent='0';return}
+  try{
+    let r=evalExpr(expr);
+    if(isFinite(r))resEl.textContent=r;
+  }catch(e){}
+}
+function calc(){
+  try{
+    let r=evalExpr(expr);
+    if(!isFinite(r)){resEl.textContent='Error';return}
+    _=String(r);expr=_;update();
+  }catch(e){resEl.textContent='Error'}
+}
+function evalExpr(e){
+  let s=e;
+  if(e.includes('!'))s=s.replace(/(\d+)!/g,(_,n)=>{let f=1;for(let i=2;i<=+n;i++)f*=i;return f});
+  s=s.replace(/(\d)\(/g,'$1*(').replace(/\)\(/g,')*(');
+  s=s.replace(/π/g,'Math.PI').replace(/(asin|acos|atan|sin|cos|tan|log|ln|√)\(/g,(_,fn)=>{
+    const m={asin:'Math.asin(',acos:'Math.acos(',atan:'Math.atan(',sin:'Math.sin(',cos:'Math.cos(',tan:'Math.tan(',log:'Math.log10(',ln:'Math.log(','√':'Math.sqrt('};
+    return m[fn];
+  });
+  s=s.replace(/(\d)(Math\.)/g,'$1*$2');
+  let o=0;for(let c of s){if(c=='(')o++;if(c==')')o--}while(o-->0)s+=')';
+  return Function('"use strict";return ('+s+')')();
+}
+
+// Keyboard support
+document.addEventListener('keydown',e=>{
+  if(e.key>='0'&&e.key<='9'||e.key==='.'||e.key==='+'||e.key==='-'||e.key==='*'||e.key==='/'||e.key==='('||e.key===')'){ins(e.key);return}
+  if(e.key==='Enter')calc();
+  if(e.key==='Escape')clr();
+  if(e.key==='Backspace')bk();
+  if(e.key==='%')ins('%');
+  if(e.key==='^')ins('**');
+});
+</script>
+</body>
+</html>
