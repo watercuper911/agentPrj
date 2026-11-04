@@ -80,7 +80,12 @@ const exprEl=document.getElementById('expr'),resEl=document.getElementById('resu
 let expr='',_='';
 
 function ins(v){
-  v=v=='−'?'-':v; // display − as -
+  v=v=='−'?'-':v;
+  // auto-close open parens when inserting an operator
+  if('+-*/%'.includes(v)){
+    let o=0;for(let c of expr){if(c=='(')o++;if(c==')')o--}
+    if(o>0)expr+=')'.repeat(o);
+  }
   expr+=v;update();
 }
 function clr(){expr='';update();}
