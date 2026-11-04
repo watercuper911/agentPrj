@@ -104,22 +104,12 @@ function calc(){
 function evalExpr(e){
   let s=e;
   if(e.includes('!'))s=s.replace(/(\d+)!/g,(_,n)=>{let f=1;for(let i=2;i<=+n;i++)f*=i;return f});
-  // implicit multiplication before function-name expansion
   s=s.replace(/(\d)\(/g,'$1*(').replace(/\)\(/g,')*(');
-  // function names → Math.*
-  s=s.replace(/π/g,'Math.PI')
-    .replace(/√\(/g,'Math.sqrt(')
-    .replace(/sin\(/g,'Math.sin(')
-    .replace(/cos\(/g,'Math.cos(')
-    .replace(/tan\(/g,'Math.tan(')
-    .replace(/asin\(/g,'Math.asin(')
-    .replace(/acos\(/g,'Math.acos(')
-    .replace(/atan\(/g,'Math.atan(')
-    .replace(/log\(/g,'Math.log10(')
-    .replace(/ln\(/g,'Math.log(');
-  // implicit multiplication after Math.* expansion
+  s=s.replace(/π/g,'Math.PI').replace(/(asin|acos|atan|sin|cos|tan|log|ln|√)\(/g,(_,fn)=>{
+    const m={asin:'Math.asin(',acos:'Math.acos(',atan:'Math.atan(',sin:'Math.sin(',cos:'Math.cos(',tan:'Math.tan(',log:'Math.log10(',ln:'Math.log(','√':'Math.sqrt('};
+    return m[fn];
+  });
   s=s.replace(/(\d)(Math\.)/g,'$1*$2');
-  // auto-close unmatched parens
   let o=0;for(let c of s){if(c=='(')o++;if(c==')')o--}while(o-->0)s+=')';
   return Function('"use strict";return ('+s+')')();
 }
