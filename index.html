@@ -102,8 +102,12 @@ function calc(){
   }catch(e){resEl.textContent='Error'}
 }
 function evalExpr(e){
-  let s=e
-    .replace(/π/g,'Math.PI')
+  let s=e;
+  if(e.includes('!'))s=s.replace(/(\d+)!/g,(_,n)=>{let f=1;for(let i=2;i<=+n;i++)f*=i;return f});
+  // implicit multiplication before function-name expansion
+  s=s.replace(/(\d)\(/g,'$1*(').replace(/\)\(/g,')*(');
+  // function names → Math.*
+  s=s.replace(/π/g,'Math.PI')
     .replace(/√\(/g,'Math.sqrt(')
     .replace(/sin\(/g,'Math.sin(')
     .replace(/cos\(/g,'Math.cos(')
@@ -113,8 +117,10 @@ function evalExpr(e){
     .replace(/atan\(/g,'Math.atan(')
     .replace(/log\(/g,'Math.log10(')
     .replace(/ln\(/g,'Math.log(');
-  if(e.includes('!'))s=s.replace(/(\d+)!/g,(_,n)=>{let f=1;for(let i=2;i<=+n;i++)f*=i;return f});
-  s=s.replace(/(\d)\(/g,'$1*(').replace(/(\d)(Math\.)/g,'$1*$2').replace(/\)\(/g,')*(');
+  // implicit multiplication after Math.* expansion
+  s=s.replace(/(\d)(Math\.)/g,'$1*$2');
+  // auto-close unmatched parens
+  let o=0;for(let c of s){if(c=='(')o++;if(c==')')o--}while(o-->0)s+=')';
   return Function('"use strict";return ('+s+')')();
 }
 
